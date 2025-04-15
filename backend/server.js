@@ -25,5 +25,14 @@ app.get('/', (req, res) => {
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+const userRoutes = require('./routes/users');   // ✅ Move this before listen
+app.use('/api/users', userRoutes);
+
+const listingRoutes = require('./routes/listings');
+app.use('/api/listings', listingRoutes);
+
+const uploadRoutes = require('./routes/upload');
+app.use('/api/upload', uploadRoutes);
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
