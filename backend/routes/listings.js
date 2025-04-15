@@ -53,5 +53,48 @@ router.get('/my', protect, async (req, res) => {
   }
 });
 
+// @route PUT /api/listings/:id
+// @desc  Update a listing (only by the owner)
+router.put('/:id', protect, async (req, res) => {
+    try {
+      const listing = await Listing.findById(req.params.id);
+  
+      if (!listing) {
+        return res.status(404).json({ message: 'Listing not found' });
+      }
+  
+      if (listing.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+  
+      Object.assign(listing, req.body); // update fields
+      const updated = await listing.save();
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  });
+
+// @route DELETE /api/listings/:id
+// @desc  Delete a listing (owner only)
+router.delete('/:id', protect, async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+
+    if (listing.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this listing' });
+    }
+
+    await listing.deleteOne(); // ✅ Use this instead of .remove()
+    res.json({ message: 'Listing deleted' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // ✅ Export router so it works in server.js
 module.exports = router;
