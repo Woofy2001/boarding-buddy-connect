@@ -24,12 +24,34 @@ router.post('/', protect, async (req, res) => {
 });
 
 // @route GET /api/listings
-// @desc  Get all listings (with optional filters)
+// @desc  Get all listings (with smart filters)
 router.get('/', async (req, res) => {
   try {
     const filters = {};
-    if (req.query.location) filters.location = { $regex: req.query.location, $options: 'i' };
-    if (req.query.maxPrice) filters.price = { $lte: parseInt(req.query.maxPrice) };
+
+    // Location search
+    if (req.query.location) {
+      filters.location = { $regex: req.query.location, $options: 'i' };
+    }
+
+    // Price range
+    if (req.query.minPrice) {
+      filters.price = { ...filters.price, $gte: parseInt(req.query.minPrice) };
+    }
+    if (req.query.maxPrice) {
+      filters.price = { ...filters.price, $lte: parseInt(req.query.maxPrice) };
+    }
+
+    // Distance filter
+    if (req.query.distanceFromCampus) {
+      filters.distanceFromCampus = req.query.distanceFromCampus;
+    }
+
+    // Amenities filter (e.g., WiFi,Laundry)
+    if (req.query.amenities) {
+      const amenitiesArray = req.query.amenities.split(',');
+      filters.amenities = { $all: amenitiesArray };
+    }
 
     const listings = await Listing.find(filters).populate('owner', 'name userType');
     res.json(listings);
@@ -56,24 +78,24 @@ router.get('/my', protect, async (req, res) => {
 // @route PUT /api/listings/:id
 // @desc  Update a listing (only by the owner)
 router.put('/:id', protect, async (req, res) => {
-    try {
-      const listing = await Listing.findById(req.params.id);
-  
-      if (!listing) {
-        return res.status(404).json({ message: 'Listing not found' });
-      }
-  
-      if (listing.owner.toString() !== req.user._id.toString()) {
-        return res.status(403).json({ message: 'Not authorized' });
-      }
-  
-      Object.assign(listing, req.body); // update fields
-      const updated = await listing.save();
-      res.json(updated);
-    } catch (err) {
-      res.status(500).json({ message: err.message });
+  try {
+    const listing = await Listing.findById(req.params.id);
+
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
     }
-  });
+
+    if (listing.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    Object.assign(listing, req.body);
+    const updated = await listing.save();
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 // @route DELETE /api/listings/:id
 // @desc  Delete a listing (owner only)
@@ -89,7 +111,7 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this listing' });
     }
 
-    await listing.deleteOne(); // ✅ Use this instead of .remove()
+    await listing.deleteOne(); // ✅ Corrected delete
     res.json({ message: 'Listing deleted' });
   } catch (err) {
     res.status(500).json({ message: err.message });
