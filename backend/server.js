@@ -34,5 +34,12 @@ app.use('/api/listings', listingRoutes);
 const uploadRoutes = require('./routes/upload');
 app.use('/api/upload', uploadRoutes);
 
+const bookmarkRoutes = require('./routes/bookmarks');
+app.use('/api/bookmarks', bookmarkRoutes);
+
+const messageRoutes = require('./routes/messages');
+app.use('/api/messages', messageRoutes); // ✅ This makes the route work
+
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

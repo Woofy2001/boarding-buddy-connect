@@ -118,5 +118,21 @@ router.delete('/:id', protect, async (req, res) => {
   }
 });
 
+// @route GET /api/listings/:id
+// @desc  Get single listing by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const listing = await Listing.findById(req.params.id).populate('owner', 'name email');
+    
+    if (!listing) {
+      return res.status(404).json({ message: 'Listing not found' });
+    }
+
+    res.json(listing);
+  } catch (err) {
+    res.status(500).json({ message: 'Invalid listing ID or server error' });
+  } 
+});
+
 // ✅ Export router so it works in server.js
 module.exports = router;
